@@ -122,6 +122,17 @@ Two Groovy scripts are included in this repository:
 
 ---
 
+## 5. QuPath StarDist scripts
+
+Two Groovy scripts are included in this repository:
+
+- `H&EAnnotationOptimised.groovy` – single-pass StarDist segmentation for all
+  annotations (global “best compromise” settings).
+- `H&EAnnotation_isletoptimised.groovy` – two-pass StarDist segmentation with
+  different settings for cores vs islets, tuned for accurate per-islet counts.
+
+---
+
 ### 5.1. Single-pass segmentation (`H&EAnnotationOptimised.groovy`)
 
 This script applies one StarDist configuration to all selected parent objects
@@ -144,7 +155,6 @@ double stardistPixelSizeMicrons = 0.5    // µm / pixel
 
 // Detection threshold (lower = more nuclei, higher = fewer nuclei)
 double probThreshold            = 0.28
-````
 
 **Behaviour:**
 
@@ -155,8 +165,8 @@ double probThreshold            = 0.28
   * all selected annotations, or
   * all annotations if nothing is selected.
 * Measures nuclear shape and intensity.
-* Does **not** apply extra size or intensity filtering.
-* Does **not** distinguish between exocrine and islet regions or modify
+* Does not apply extra size or intensity filtering.
+* Does not distinguish between exocrine and islet regions or modify
   `PathClass` for detections.
 
 Use this script when a single global configuration is sufficient across the
