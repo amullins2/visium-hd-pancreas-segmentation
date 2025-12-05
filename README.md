@@ -240,7 +240,3 @@ Exported detection measurements can then be grouped by the `Classification`
 column to obtain per-core and per-islet nuclear counts for downstream Visium
 HD analyses.
 
-```
-```
-
-
