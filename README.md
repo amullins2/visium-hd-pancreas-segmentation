@@ -110,22 +110,137 @@ This configuration provides high-recall islet nuclear segmentation suitable for
 per-islet cell counting while maintaining good performance in exocrine tissue.
 
 ---
-
+````markdown
 ## 5. QuPath StarDist scripts
 
 Two Groovy scripts are included in this repository:
 
-### 5.1. Single-pass segmentation script
+- `H&EAnnotationOptimised.groovy` – single-pass StarDist segmentation for all
+  annotations (global “best compromise” settings).
+- `H&EAnnotation_isletoptimised.groovy` – two-pass StarDist segmentation with
+  different settings for cores vs islets, tuned for accurate per-islet counts.
 
-The original single-pass H&E nuclear segmentation script is stored as:
+---
 
-- [`stardist_visium_nuclei.groovy`](stardist_visium_nuclei.groovy)
+### 5.1. Single-pass segmentation (`H&EAnnotationOptimised.groovy`)
 
-Key parameters:
+This script applies one StarDist configuration to all selected parent objects
+(or all annotations if none are selected). It corresponds to the global,
+single-pass optimisation described in Sections 3–4.
+
+**Script:** [`H&EAnnotationOptimised.groovy`](H&EAnnotationOptimised.groovy)
+
+**Key parameters:**
 
 ```groovy
-def modelPath = "/path/to/he_heavy_augment.pb"
-double imagePixelSizeMicrons    = 1.06
-double stardistPixelSizeMicrons = 0.5
-double probThreshold            = 0.30
+// Path to StarDist model
+def modelPath = "/Users/alanamullins/Downloads/he_heavy_augment.pb"
+
+// Image calibration
+double imagePixelSizeMicrons    = 1.06   // µm / pixel
+
+// StarDist analysis scale
+double stardistPixelSizeMicrons = 0.5    // µm / pixel
+
+// Detection threshold (lower = more nuclei, higher = fewer nuclei)
+double probThreshold            = 0.28
+````
+
+**Behaviour:**
+
+* Overrides the pixel size of the current image for consistent measurements.
+* Uses percentile normalisation (`normalizePercentiles(1, 99)`).
+* Runs StarDist on:
+
+  * all selected annotations, or
+  * all annotations if nothing is selected.
+* Measures nuclear shape and intensity.
+* Does **not** apply extra size or intensity filtering.
+* Does **not** distinguish between exocrine and islet regions or modify
+  `PathClass` for detections.
+
+Use this script when a single global configuration is sufficient across the
+whole core and per-islet optimisation is not required.
+
+---
+
+### 5.2. Two-pass islet-optimised segmentation (`H&EAnnotation_isletoptimised.groovy`)
+
+This script implements a two-pass workflow where cores (exocrine + ducts) and
+islets are segmented separately with distinct StarDist settings. It is used to
+obtain higher recall in endocrine islets while maintaining good segmentation
+in surrounding exocrine tissue.
+
+**Script:** [`H&EAnnotation_isletoptimised.groovy`](H&EAnnotation_isletoptimised.groovy)
+
+#### General settings
+
+```groovy
+// Path to StarDist model
+def modelPath = "/Users/alanamullins/Downloads/he_heavy_augment.pb"
+
+// Image calibration
+double imagePixelSizeMicrons = 1.06   // µm / pixel
+
+// StarDist analysis scales
+double stardistPixelSizeMicronsCores  = 0.55  // cores: exocrine + ducts
+double stardistPixelSizeMicronsIslets = 0.50  // islets: slightly finer
+```
+
+Annotations are split based on their **name**:
+
+* **Islet annotations:** name contains `"islet"` (case-insensitive), e.g.
+  `TMA1_core01_islet01`.
+* **Core annotations:** all other annotations (e.g. `TMA1_core01`).
+
+Existing detections under these annotations are removed before each pass.
+
+#### Pass 1 – cores (exocrine + ducts)
+
+```groovy
+// Core (non-islet) parameters
+double probThresholdCores = 0.18     // more sensitive than single-pass
+double minAreaCores       = 6.0      // µm²
+double maxAreaCores       = 400.0    // µm²
+double minHemaODCores     = 0.06     // optional Hematoxylin OD filter
+```
+
+* Runs StarDist on all **non-islet** annotations using moderately sensitive
+  parameters to capture exocrine and ductal nuclei.
+* Applies size filtering (`minAreaCores`–`maxAreaCores`) to remove tiny debris
+  and very large merged objects.
+* Optionally removes low–hematoxylin detections (`minHemaODCores`) to clean up
+  non-nuclear artefacts in exocrine/ductal regions.
+
+#### Pass 2 – islets (endocrine ROIs)
+
+```groovy
+// Islet parameters (more sensitive)
+double probThresholdIslets = 0.10    // very low to capture faint/edge nuclei
+double minAreaIslets       = 2.0     // µm² (allow small partial nuclei)
+double maxAreaIslets       = 500.0   // µm²
+double minHemaODIslets     = 0.0     // OD filter OFF for islets
+```
+
+* Runs StarDist **only** on annotations whose name contains `"islet"`.
+* Clears and re-segments nuclei within those islet ROIs using more sensitive
+  settings (lower threshold, relaxed area limits).
+* Leaves hematoxylin OD filtering disabled (`minHemaODIslets = 0.0`) to avoid
+  discarding pale endocrine nuclei.
+
+#### Classification and downstream counting
+
+For both passes:
+
+* Each detection is assigned a `PathClass` equal to its parent annotation name
+  (e.g. `TMA1_core01` or `TMA1_core01_islet02`).
+* Final nucleus counts per pass are printed to the QuPath log.
+
+Exported detection measurements can then be grouped by the `Classification`
+column to obtain per-core and per-islet nuclear counts for downstream Visium
+HD analyses.
+
+```
+```
+
 
