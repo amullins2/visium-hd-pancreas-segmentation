@@ -153,7 +153,7 @@ This script applies one StarDist configuration to all selected parent objects (o
 **Behaviour**
 
 * Overrides the pixel size of the current image to 1.06 µm per pixel for consistent measurements.
-* Uses percentile normalisation (1st–99th percentiles) before running the StarDist model.
+* Uses percentile normalisation (1st-99th percentiles) before running the StarDist model.
 * Runs StarDist on:
 
   * all selected annotations, or
@@ -188,7 +188,7 @@ Annotations are split based on their name:
 
 Existing detections under these annotations are removed before each pass.
 
-#### Pass 1 – cores (exocrine + ducts)
+#### Pass 1 - cores (exocrine + ducts)
 
 StarDist is first run on all non-islet annotations using moderately sensitive parameters tuned for exocrine and ductal nuclei.
 
@@ -205,7 +205,7 @@ Behaviour for cores:
 * Applies area-based filtering using `minAreaCores` and `maxAreaCores` to remove tiny debris and large merged objects.
 * Optionally removes detections with low hematoxylin staining (`minHemaODCores`), helping to clean non-nuclear artefacts in exocrine and ductal regions.
 
-#### Pass 2 – islets (endocrine ROIs)
+#### Pass 2 - islets (endocrine ROIs)
 
 StarDist is then run again only inside islet annotations, using more sensitive settings to capture pale and edge nuclei. Existing detections in islet annotations from the first pass are cleared before re-segmentation.
 
