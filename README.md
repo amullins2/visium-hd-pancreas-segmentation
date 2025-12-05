@@ -145,7 +145,7 @@ This script applies one StarDist configuration to all selected parent objects (o
 
 **Key parameters**
 
-* `modelPath`: `/Users/alanamullins/Downloads/he_heavy_augment.pb`
+* `modelPath`: `/he_heavy_augment.pb`
 * `imagePixelSizeMicrons`: 1.06 µm per pixel (image calibration)
 * `stardistPixelSizeMicrons`: 0.5 µm per pixel (StarDist analysis scale)
 * `probThreshold`: 0.28 (lower = more nuclei, higher = fewer nuclei)
@@ -176,7 +176,7 @@ This script implements a two-pass workflow where cores (exocrine tissue and duct
 
 #### General settings
 
-* `modelPath`: `/Users/alanamullins/Downloads/he_heavy_augment.pb`
+* `modelPath`: `/he_heavy_augment.pb`
 * `imagePixelSizeMicrons`: 1.06 µm per pixel (image calibration)
 * `stardistPixelSizeMicronsCores`: 0.55 µm per pixel (analysis scale for cores)
 * `stardistPixelSizeMicronsIslets`: 0.50 µm per pixel (analysis scale for islets, slightly finer)
