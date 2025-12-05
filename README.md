@@ -102,7 +102,7 @@ StarDist workflow was implemented in QuPath.
 
 ![Optimised islet nuclear segmentation](roi_seg_isletoptimised.png)
 
-- Red outlines: nuclei detected in the core (exocrine + ducts).  
+- Yellow outlines: nuclei detected in the core (exocrine + ducts).  
 - Blue / green outlines: nuclei detected within islet ROIs using
   islet-optimised StarDist settings.
 
