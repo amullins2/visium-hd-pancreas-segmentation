@@ -6,6 +6,12 @@
  *
  * - Uses he_heavy_augment.pb
  * - Image calibration: ~1.06 µm / pixel
+ *
+ * EXTRA:
+ * - Each nucleus gets:
+ *     Classification = parent annotation name (e.g. TMA1_core01 or TMA1_core01_islet02)
+ *     CoreIndex      = core number parsed from name (core01 -> 1)
+ *     IsletIndex     = islet number parsed from name (islet02 -> 2; NaN for non-islet)
  */
 
 import qupath.ext.stardist.StarDist2D
@@ -141,19 +147,46 @@ void runStardistOnAnnotations(
     }
     println "Detected ${detections.size()} nuclei in ${labelType} annotation(s) before filtering."
 
-    // Label detections with parent annotation name
+    // -----------------------------------------
+    // Label detections & add core/islet indices
+    // -----------------------------------------
     int nLabeled = 0
     detections.each { det ->
         def parent = det.getParent()
         if (parent != null && pathObjects.contains(parent)) {
-            def name = parent.getName()
-            if (name != null) {
-                det.setPathClass(PathClassFactory.getPathClass(name))
+            def parentName = parent.getName()
+            if (parentName != null) {
+                // 1) Classification = parent annotation name (core or islet)
+                det.setPathClass(PathClassFactory.getPathClass(parentName))
                 nLabeled++
+
+                // 2) Use Classification name to parse indices
+                def cls = det.getPathClass()
+                def clsName = cls == null ? null : cls.getName()
+                double coreIndex  = Double.NaN
+                double isletIndex = Double.NaN
+
+                if (clsName != null) {
+                    // Match patterns like:
+                    //  TMA1_core01
+                    //  TMA1_core01_islet02
+                    //  TMA12_core03_islet01
+                    def m = (clsName =~ /(?i)TMA\d+_core0*(\d+)(?:_islet0*(\d+))?/)
+                    if (m.matches()) {
+                        coreIndex = (m[0][1] as double)
+                        if (m[0].size() > 2 && m[0][2] != null) {
+                            isletIndex = (m[0][2] as double)
+                        }
+                    }
+                }
+
+                // 3) Store indices as measurements (numeric columns)
+                det.getMeasurementList().putMeasurement("CoreIndex", coreIndex)
+                det.getMeasurementList().putMeasurement("IsletIndex", isletIndex)
             }
         }
     }
-    println "Set Classification for ${nLabeled} ${labelType} nuclei to parent annotation name."
+    println "Set Classification and core/islet indices for ${nLabeled} ${labelType} nuclei."
 
     // Size filter
     def toRemoveSize = detections.findAll { det ->
